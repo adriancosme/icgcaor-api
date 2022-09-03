@@ -35,4 +35,11 @@ export class PagesService {
     }
     return page;
   }
+
+  /**
+   * Get list of pages
+   */
+  async getPages() {
+    return await this.pageModel.find({});
+  }
 }
