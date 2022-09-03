@@ -1,4 +1,4 @@
-import { Body, Controller, ParseArrayPipe, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, ParseArrayPipe, Post, Put, UseGuards } from '@nestjs/common';
 import {
   ApiBadGatewayResponse,
   ApiBadRequestResponse,
@@ -10,11 +10,13 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { DataOutput } from 'src/common/interfaces';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { Product } from './schemas/product.schema';
 import { ProductsService } from './services/products.service';
 
+@UseGuards(JwtAuthGuard)
 @Controller('products')
 export class ProductsController {
   constructor(public service: ProductsService) {}
@@ -68,5 +70,19 @@ export class ProductsController {
   @Post('bulk')
   async createBulk(@Body(new ParseArrayPipe({ items: CreateProductDto })) dto: CreateProductDto[]): Promise<DataOutput<Product[]>> {
     return { message: 'Products created successfully', output: await this.service.createBatch(dto) };
+  }
+
+  /**
+   * Get count of products
+   */
+  @ApiTags('Products single operation')
+  @ApiOperation({ summary: 'Get count of products', description: 'Get count of products' })
+  @ApiOkResponse({ status: 200, description: 'Success response' })
+  @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized' })
+  @ApiBadGatewayResponse({ status: 502, description: 'Something happened' })
+  @ApiBadRequestResponse({ status: 400, description: 'You will prompt with an array with the validation issues' })
+  @Get('/count')
+  async getCount() {
+    return this.service.getCountTotal();
   }
 }

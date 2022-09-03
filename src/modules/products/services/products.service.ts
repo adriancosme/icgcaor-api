@@ -53,4 +53,12 @@ export class ProductsService {
     }
     return products;
   }
+
+  /**
+   * Get count total of products
+   */
+
+  async getCountTotal() {
+    return await this.productModel.countDocuments({});
+  }
 }
