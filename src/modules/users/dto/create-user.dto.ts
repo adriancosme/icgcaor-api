@@ -15,21 +15,6 @@ export class CreateUserDto {
   @IsNotEmpty()
   email!: string;
 
-  @ApiProperty({
-    description: 'Username for your account, must be unique.',
-  })
-  @IsUsernameAlreadyExist({
-    message: 'Username $value already exists. Choose another username.',
-  })
-  @IsString()
-  @MinLength(8)
-  @MaxLength(20)
-  @Matches(PATTERN_VALID_USERNAME, {
-    message: `Username $value don't have a valid format`,
-  })
-  @IsNotEmpty()
-  username!: string;
-
   @ApiProperty({ description: 'Secure password' })
   @IsString()
   @IsNotEmpty()

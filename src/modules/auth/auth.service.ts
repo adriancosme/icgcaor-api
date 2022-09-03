@@ -13,18 +13,17 @@ export interface ApiLoginSuccess {
 
 export interface JwtPayload {
   sub: string;
-  username: string;
+  email: string;
 }
 
 @Injectable()
 export class AuthService {
   constructor(private readonly usersService: UsersService, private readonly jwtService: JwtService) {}
 
-  async validateUser(userData: string, password: string): Promise<User> {
+  async validateUser(userData: string, password: string): Promise<Partial<User>> {
     // Verify if userData is email or username
     const data: { username?: string; email?: string } = {};
     !PATTERN_VALID_EMAIL.test(userData) ? (data.username = userData) : (data.email = userData);
-
     const user = await this.usersService.getByUser(data);
     if (!user) {
       throw new NotFoundException('Your account does not exist');
@@ -40,8 +39,8 @@ export class AuthService {
     return user;
   }
 
-  async login(user: any) {
-    const payload: JwtPayload = { username: user.username, sub: user.id };
+  async login(user: Partial<User>) {
+    const payload: JwtPayload = { email: user.email, sub: user._id };
     const accessToken = this.jwtService.sign(payload);
     return {
       user,

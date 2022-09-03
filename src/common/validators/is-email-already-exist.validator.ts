@@ -7,7 +7,7 @@ import { User, UserDocument } from '../../modules/users/schemas/user.schema';
 export class IsEmailAlreadyExistConstraint implements ValidatorConstraintInterface {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
   async validate(email: string) {
-    const result = this.userModel.findOne({ email });
+    const result = await this.userModel.findOne({ email });
     if (result) return false;
     return true;
   }

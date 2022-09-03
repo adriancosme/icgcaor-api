@@ -9,6 +9,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import * as compression from 'compression';
+import { useContainer } from 'class-validator';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -29,6 +30,7 @@ async function bootstrap() {
   const port = configService.get<number>(CONFIG_SERVER_PORT);
   const environment = configService.get<string>(NODE_ENV);
 
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
   // Interceptors and validators
   app.useGlobalInterceptors(new TransformInterceptor());
   app.useGlobalPipes(

@@ -25,10 +25,14 @@ export class UsersService {
    * Get by username or email
    * @param data { username: string, email: string }
    */
-  async getByUser(data: { username?: string; email?: string }): Promise<User> {
-    return await this.userModel.findOne(data).catch((err) => {
+  async getByUser(data: { email?: string }): Promise<User> {
+    const user = await this.userModel.findOne(data).catch((err) => {
       throw new BadGatewayException('Something happened', err);
     });
+    if (!user) {
+      return null;
+    }
+    return user.toObject();
   }
 
   /**
