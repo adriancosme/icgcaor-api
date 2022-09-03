@@ -12,11 +12,13 @@ export class User extends Document {
   @ApiProperty()
   @Prop({ required: true, length: 20 })
   username: string;
+  @ApiProperty()
   @Prop({
     length: 500,
     select: false,
   })
   password: string;
+  @ApiProperty()
   @Prop({ default: true })
   enabled: boolean;
 }
