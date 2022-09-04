@@ -1,4 +1,4 @@
-import { Body, Controller, Get, ParseArrayPipe, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, ParseArrayPipe, Post, Put, Res, StreamableFile, UseGuards } from '@nestjs/common';
 import {
   ApiBadGatewayResponse,
   ApiBadRequestResponse,
@@ -12,9 +12,11 @@ import {
 import { DataOutput } from 'src/common/interfaces';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateProductDto } from './dtos/create-product.dto';
+import { ExportProductDto } from './dtos/export-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { Product } from './schemas/product.schema';
 import { ProductsService } from './services/products.service';
+import { Response } from 'express';
 
 @UseGuards(JwtAuthGuard)
 @Controller('products')
@@ -83,6 +85,24 @@ export class ProductsController {
   @ApiBadRequestResponse({ status: 400, description: 'You will prompt with an array with the validation issues' })
   @Get('/count')
   async getCount() {
-    return this.service.getCountTotal();
+    return await this.service.getCountTotal();
+  }
+
+  /**
+   * Export products given dates
+   * @param dto ExportProductDto
+   * @returns CSV File
+   */
+  @ApiTags('Products single operation')
+  @ApiOperation({ summary: 'Get csv of products', description: 'Get csv of products' })
+  @ApiOkResponse({ status: 200, description: 'Success response' })
+  @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized' })
+  @ApiBadGatewayResponse({ status: 502, description: 'Something happened' })
+  @ApiBadRequestResponse({ status: 400, description: 'You will prompt with an array with the validation issues' })
+  @Post('/export')
+  @Header('Content-Type', 'application/json')
+  @Header('Content-Disposition', 'attachment; fileName="products.csv"')
+  async export(@Body() dto: ExportProductDto) {
+    return await this.service.exportProducts(dto);
   }
 }

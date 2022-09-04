@@ -1,10 +1,13 @@
-import { BadGatewayException, BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateProductDto } from '../dtos/create-product.dto';
+import { ExportProductDto } from '../dtos/export-product.dto';
 import { UpdateProductDto } from '../dtos/update-product.dto';
 import { Product, ProductDocument } from '../schemas/product.schema';
-
+import { createObjectCsvWriter } from 'csv-writer';
+import { join } from 'path';
+import { createReadStream, readFileSync } from 'fs';
 @Injectable()
 export class ProductsService {
   constructor(@InjectModel(Product.name) private readonly productModel: Model<ProductDocument>) {}
@@ -60,5 +63,32 @@ export class ProductsService {
 
   async getCountTotal() {
     return await this.productModel.countDocuments({});
+  }
+
+  /**
+   * Export products to csv
+   */
+  async exportProducts(dto: ExportProductDto) {
+    const products = await this.productModel
+      .find({ updatedAt: { $gte: new Date(dto.dateStart), $lt: new Date(dto.dateEnd) } })
+      .sort({ updatedAt: -1 });
+    const fileName = `products_${new Date()
+      .toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })
+      .replace(' ', '')
+      .replace('/', '-')
+      .replace('/', '-')
+      .replace(',', '_')
+      .replace(':', '_')}.csv`;
+    const csvObject = createObjectCsvWriter({
+      path: join(process.cwd(), '/temp', fileName),
+      headerIdDelimiter: '.',
+      header: ['name', 'internalCode', 'promotion', 'promotion.description', 'promotion.expiration', 'priceInList', 'pricePPago'].map((item) => ({
+        id: item,
+        title: item.replace('.', '_'),
+      })),
+    });
+    await csvObject.writeRecords(products);
+    const file = await readFileSync(join(process.cwd(), '/temp', fileName));
+    return `data:text/csv;base64,${file.toString('base64')}`;
   }
 }

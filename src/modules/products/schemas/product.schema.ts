@@ -11,7 +11,7 @@ export class Product extends Document {
   @Prop({ required: true, unique: true })
   internalCode: string;
   @ApiProperty()
-  @Prop({ type: PromotionSchema })
+  @Prop({ type: PromotionSchema, default: 'NULL' })
   promotion: Promotion | null;
   @ApiProperty()
   @Prop()
