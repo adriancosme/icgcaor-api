@@ -13,4 +13,14 @@ export class ScrapperLogsService {
     const log = await this.scrapperLogsModel.findOne({}).sort({ createdAt: -1 });
     return log.toObject();
   }
+
+  /**
+   * Create log on update or add product
+   * @param products - Count of products inserted
+   */
+  async create(products: number) {
+    const log = new this.scrapperLogsModel({ productsImported: products });
+    await log.save();
+    return log.toObject();
+  }
 }
