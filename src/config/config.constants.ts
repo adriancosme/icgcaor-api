@@ -6,6 +6,8 @@ export const CONFIG_SERVER_JWT_SECRET = 'server.jwt.secret';
 export const CONFIG_SERVER_PASSPORT = 'server.passport';
 // DATABASE NAMESPACE
 export const CONFIG_DB_CONFIG = 'database.config';
+// REDIS NAMESPACE
+export const CONFIG_QUEUE_CONFIG = 'queue.config';
 // MAILER NAMESPACE
 export const CONFIG_MAILER_CONFIG = 'mailer.config';
 // REGEX PATTERNS
