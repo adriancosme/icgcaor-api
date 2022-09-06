@@ -9,3 +9,9 @@ services:
       - .:/usr/src/app
     env_file:
       - environment/.env.production
+    networks:
+      - webnet
+
+networks:
+  webnet:
+    driver: bridge
