@@ -24,7 +24,7 @@
     "db:start": "docker-compose -f database.yml start",
     "db:stop": "docker-compose -f database.yml stop",
     "db:debug": "docker-compose -f database.yml logs -f",
-    "deploy:now": "yarn run build && now",
+    "deploy:now": "npm run build && now",
     "deploy:docker:build": "docker-compose -f deploy.yml up",
     "deploy:docker:rebuild": "docker-compose -f deploy.yml build",
     "deploy:docker:recreate": "docker-compose -f deploy.yml up --force-recreate",

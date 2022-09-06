@@ -5,11 +5,9 @@ function bullModuleOptions(): BullModuleOptions {
   return {
     redis: {
       host: process.env.REDIS_HOST,
-      port: Number(process.env.REDIS_PORT),
-      username: process.env.REDIS_USER,
-      password: process.env.REDIS_PASS,
+      port: +process.env.REDIS_PORT,
     },
-  };
+  } as BullModuleOptions;
 }
 
 export default registerAs('queue', () => ({ config: bullModuleOptions }));

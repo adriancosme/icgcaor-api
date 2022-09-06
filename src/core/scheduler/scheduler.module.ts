@@ -1,4 +1,4 @@
-import { BullModule } from '@nestjs/bull';
+import { BullModule, BullModuleOptions } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -19,7 +19,7 @@ import { TaskService } from './task.service';
         removeOnFail: true,
         delay: 1000,
       },
-    }),
+    } as BullModuleOptions),
     ProductsModule,
     MongooseModule.forFeature([{ name: Page.name, schema: PageSchema }]),
     ScrapperLogsModule,
