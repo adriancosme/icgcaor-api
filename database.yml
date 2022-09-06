@@ -1,28 +1,19 @@
 version: "3"
 services:
   database:
-    image: "postgres" # use latest official postgres version
+    image: mongo:latest # use latest official mongodb version
     env_file:
       - environment/.env.${NODE_ENV:-development} # configure postgres
     volumes:
-      - database-data:/var/lib/postgresql/data/ # persist data even if container shuts down
+      - database-data:/data/db # persist data even if container shuts down
     ports:
-      - "${PGADMIN_PORT:-5432}:5432"
+      - "${MONGODB_PORT:-27017}:27017"
     networks:
-      - postgres
-  pgadmin:
-    image: dpage/pgadmin4
-    env_file:
-      - environment/.env.${NODE_ENV:-development}
-    volumes:
-      - pgadmin:/root/.pgadmin
-    ports:
-      - "${PGADMIN_PORT:-5050}:80"
-    networks:
-      - postgres
+      - app-network
+    restart: unless-stopped
 networks:
-  postgres:
+  app-network:
+    name: app-network
     driver: bridge
 volumes:
   database-data:
-  pgadmin:

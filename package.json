@@ -26,6 +26,7 @@
     "db:debug": "docker-compose -f database.yml logs -f",
     "deploy:now": "npm run build && now",
     "deploy:docker:build": "docker-compose -f deploy.yml up",
+    "deploy:docker:down": "docker-compose -f deploy.yml down",
     "deploy:docker:rebuild": "docker-compose -f deploy.yml build",
     "deploy:docker:recreate": "docker-compose -f deploy.yml up --force-recreate",
     "deploy:docker:start": "docker-compose -f deploy.yml start",
