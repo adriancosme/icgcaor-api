@@ -24,11 +24,11 @@ async function bootstrap() {
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup('', app, document);
 
   // Environments
   const port = configService.get<number>(CONFIG_SERVER_PORT);
   const environment = configService.get<string>(NODE_ENV);
+  environment === 'development' ? SwaggerModule.setup('', app, document) : null;
 
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   // Interceptors and validators
