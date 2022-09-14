@@ -6,9 +6,6 @@ export class Promotion extends Document {
   @ApiProperty()
   @Prop()
   description: string;
-  @ApiProperty()
-  @Prop()
-  expiration: string;
 }
 
 export type PromotionDocument = Promotion & Document;

@@ -2,14 +2,15 @@ import { OnQueueActive, OnQueueCompleted, OnQueueFailed, OnQueueStalled, Process
 import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
 import { Product } from '../../modules/products/schemas/product.schema';
-import { ScrapperLogsService } from '../../modules/scrapper-logs/services/schepper-logs.service';
+import { ScrapperLogsService } from '../../modules/scrapper-logs/services/scrapper-logs.service';
 import { ProductsService } from '../../modules/products/services/products.service';
+import { CreateProductDto } from 'src/modules/products/dtos/create-product.dto';
 @Processor('products-queue')
 export class ProductsProcessor {
   constructor(public service: ProductsService, public logsService: ScrapperLogsService) {}
   private readonly logger = new Logger(ProductsProcessor.name);
   @Process('save')
-  async save(job: Job<Product[]>) {
+  async save(job: Job<CreateProductDto[]>) {
     const products = await this.service.createBatch(job.data);
     await this.logsService.create(products.length);
     return job.data;

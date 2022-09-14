@@ -6,6 +6,9 @@ import puppeteer from 'puppeteer';
 import { Page, PageDocument } from '../../modules/pages/schemas/page.schema';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
+import { Product } from '../../modules/products/schemas/product.schema';
+import { IProduct } from '../../common/interfaces';
+import { CreateProductDto } from 'src/modules/products/dtos/create-product.dto';
 @Injectable()
 export class IndarScrapperService {
   constructor(@InjectModel(Page.name) private readonly pageModel: Model<PageDocument>, @InjectQueue('products-queue') private scrapperQueue: Queue) {}
@@ -18,13 +21,15 @@ export class IndarScrapperService {
 
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async getDataViaPuppeter() {
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const pages = await this.pageModel.find({}).sort({ createdAt: 1 });
     await Promise.all(
       pages.map(async (page) => {
         this.logger.debug(`Getting data from ${page.name} via puppeter!`);
         const products = await this.extractData({ uri: page.url, browser });
-        this.scrapperQueue.add('save', products);
+        console.log(products.length);        
+        const job = await this.scrapperQueue.add('save', products);
+        console.log('Job added', job);
         return products;
       }),
     );
@@ -32,168 +37,129 @@ export class IndarScrapperService {
   }
 
   async extractData({ uri, browser }) {
-    const products = [];
+    const products: CreateProductDto[] = [];
     const page = await browser.newPage();
-    await page.goto('http://www.indar.com.mx');
-
-    await page.click('#entrar');
-    await page.waitForSelector('#entrarVM', { timeout: 60000 });
-    await page.type(`#registracliente input[name="wusuario"]`, 'ferre_motos@hotmail.com');
-    await page.type(`#registracliente input[name="wcontrasena"]`, '87JUANRO');
-    await page.evaluate((btnSelector) => {
-      document.querySelector(btnSelector).click();
-    }, '#vm_boton');
-    await page.waitForSelector('#usuarioMenu', { timeout: 60000 });
-    const url = new URL(uri);
-    await page.goto(url.toString());
-    const lastPageLink = await page.evaluate(() => {
-      const linkToLastPage = document.querySelector<HTMLAnchorElement>('#tabla_posicion_pagina2 > div > a:nth-last-child(-n+1)#tabla_pagina_otras');
-      if (!linkToLastPage) {
-        return null;
-      }
-      return linkToLastPage.href;
+    await page.goto('https://www.indar.mx/', {
+      waitUntil: 'networkidle2',
     });
-    const currentPage = await page.evaluate(() => {
-      const pageLink = document.querySelector('#tabla_pagina_actual');
-      if (!pageLink) {
-        return null;
-      }
-      return pageLink.textContent.trim();
+    await page.evaluate(() => {
+      const buttonOpenModalLogin = document.querySelector<HTMLHeadingElement>('.login-options > div > h5[onclick="activeModal(1)"]');
+      buttonOpenModalLogin.click();
     });
-    const lastPage = new URL(lastPageLink);
-    for (let index = parseInt(currentPage) - 1; index < parseInt(lastPage.searchParams.get('wpage')); index++) {
-      await page.waitForSelector('#i_tbl_art > div:nth-child(1)', {
-        timeout: 60000,
-      });
-      await this.delay(1000);
-      const productNames = await page.evaluate(async () => {
-        const divs = [...document.querySelectorAll('#i_tbl_art > div:nth-child(1)')];
-        return divs.map((div) => {
-          return div?.innerHTML.trim().split('<br>')[0].trim();
-        });
-      });
-      const productInternalCodes = await page.evaluate(() => {
-        const divs = [...document.querySelectorAll('#i_tbl_art')];
-        return divs.map((div, idx) => {
-          const bestPriceIcon = document.querySelector(`#i_tbl_art:nth-child(${idx + 1}) > div.tbl_art_des.tbl_art_des4`);
-          if (bestPriceIcon) {
-            const code = document.querySelector(`#i_tbl_art:nth-child(${idx + 1}) > div:nth-child(3)`);
-            return code.innerHTML.trim().split('<br>')[0].trim();
-          } else {
-            const code = document.querySelector(`#i_tbl_art:nth-child(${idx + 1}) > div:nth-child(2)`);
-            return code.innerHTML.trim().split('<br>')[0].trim();
-          }
-        });
-      });
+    await page.waitForSelector('#login-modal');
+    await page.type('#login-modal > form #email', 'ferre_motos@hotmail.com');
+    await page.type('#login-modal > form #password', '87juanro');
+    await Promise.all([
+      await page.evaluate(() => {
+        const LoginBtn = document.querySelector<HTMLAnchorElement>('#login-modal > form > .login-buttons > button.btn.login-btn[type="submit"]');
+        LoginBtn.click();
+      }),
+      await page.waitForNavigation({ waitUntil: 'networkidle2' }),
+    ]);
+    const isLoggedIn = await page.evaluate(() => {
+      const iconosCuenta = document.querySelectorAll('.iconos-cuenta.row');
+      if (iconosCuenta.length > 0) return true;
+    });
+    if (!isLoggedIn) {
+      console.error('There are some problems trying to authenticate');
+      await browser.close();
+    }
 
-      const productPromotions = await page.evaluate(() => {
-        const divs = [...document.querySelectorAll('#i_tbl_art')];
+    // GO TO PAGE AND GET COD PRODUCTS OF EVERY PAGE
+    await Promise.all([
+      page.goto(uri, {
+        waitUntil: 'networkidle2',
+      }),
+      page.waitForNavigation({ waitUntil: 'networkidle2' }),
+    ]);
+    const hasPagination = await page.evaluate(() => {
+      const liItems = document.querySelectorAll('#paginationUl li');
+      return liItems.length;
+    });
+    let isLastPage = false;
+    while (!isLastPage) {
+      await page.waitForSelector('#productList > div > div > div.itemInfo > h5');
+      const codes = await page.evaluate(() => {
+        const productsDescription = [...document.querySelectorAll('#productList > div > div > div.itemInfo > h5')];
+        return productsDescription.map((value) => {
+          return value.textContent.split(' - ')[0].toString().trim();
+        });
+      });
+      for (const code of codes) {
+        const newPage = await browser.newPage();
 
-        return Promise.all(
-          divs.map(async (div, idx) => {
-            function delay(time) {
-              return new Promise(function (resolve) {
-                setTimeout(resolve, time);
-              });
-            }
-            await delay(1000);
-            const bestPriceIcon = document.querySelector(`#i_tbl_art:nth-child(${idx + 1}) > div.tbl_art_des.tbl_art_des4`);
-            if (bestPriceIcon) {
-              function delay(time) {
-                return new Promise(function (resolve) {
-                  setTimeout(resolve, time);
-                });
-              }
-              await delay(1000);
-              const promotion = document.querySelector(`#i_tbl_art:nth-child(${idx + 1}) > div:nth-child(6)`);
-              if (promotion.childNodes[0].textContent.replace(/\n/g, '').trim() === 'Sin promoción') {
-                return null;
-              } else {
-                return {
-                  description: `${promotion.childNodes[3].textContent.replace(/\n/g, '').trim()} ${promotion.childNodes[6].textContent
-                    .replace(/\n/g, '')
-                    .trim()}`,
-                  expiration: promotion.childNodes[12].textContent.replace(/[^0-9/]+/g, '').trim(),
-                };
-              }
-            } else {
-              function delay(time) {
-                return new Promise(function (resolve) {
-                  setTimeout(resolve, time);
-                });
-              }
-              await delay(1000);
-              const promotion = document.querySelector(`#i_tbl_art:nth-child(${idx + 1}) > div:nth-child(5)`);
-              if (promotion.childNodes[0].textContent.replace(/\n/g, '').trim() === 'Sin promoción') {
-                return null;
-              } else {
-                return {
-                  description: `${promotion.childNodes[3].textContent.replace(/\n/g, '').trim()} ${promotion.childNodes[6].textContent
-                    .replace(/\n/g, '')
-                    .trim()}`,
-                  expiration: promotion.childNodes[12].textContent.replace(/[^0-9/]+/g, '').trim(),
-                };
-              }
-            }
-          }),
-        );
-      });
-      const productPriceList = await page.evaluate(() => {
-        const divs = [...document.querySelectorAll('#i_tbl_art')];
-        return divs.map((div, idx) => {
-          const bestPriceIcon = document.querySelector(`#i_tbl_art:nth-child(${idx + 1}) > div.tbl_art_des.tbl_art_des4`);
-          if (bestPriceIcon) {
-            const price = document.querySelector(`#i_tbl_art:nth-child(${idx + 1}) > div:nth-child(7) > span:nth-child(2)`);
-            if (price.textContent) {
-              return price.textContent.replace(/[^0-9.]+/g, '');
-            }
-          } else {
-            const price = document.querySelector(`#i_tbl_art:nth-child(${idx + 1}) > div:nth-child(6) > span:nth-child(2)`);
-            if (price.textContent) {
-              return price.textContent.replace(/[^0-9.]+/g, '');
-            }
-          }
+        const res = await newPage.goto(`https://www.indar.mx/portal/detallesProducto/${code}`, {
+          waitUntil: 'networkidle2',
         });
-      });
-      const productPricePPago = await page.evaluate(() => {
-        const divs = [...document.querySelectorAll('#i_tbl_art')];
-        return divs.map((div, idx) => {
-          const bestPriceIcon = document.querySelector(`#i_tbl_art:nth-child(${idx + 1}) > div.tbl_art_des.tbl_art_des4`);
-          if (bestPriceIcon) {
-            const price = document.querySelector(`#i_tbl_art:nth-child(${idx + 1}) > div:nth-child(8) > div.tbl_art_des3`);
-            if (price.textContent) {
-              return price.textContent.replace(/[^0-9.]+/g, '');
-            }
-          } else {
-            const price = document.querySelector(`#i_tbl_art:nth-child(${idx + 1}) > div:nth-child(7) > div.tbl_art_des3`);
-            if (price.textContent) {
-              return price.textContent.replace(/[^0-9.]+/g, '');
-            }
+        if (res.status() === 500) {
+          const res = await newPage.reload({ waitUntil: 'networkidle2' });
+          if (res.status() === 500) {
+            break;
           }
-        });
-      });
-      if (
-        productNames.length === productInternalCodes.length &&
-        productNames.length === productPromotions.length &&
-        productNames.length === productPriceList.length &&
-        productNames.length === productPricePPago.length
-      ) {
-        for (let index = 0; index < productNames.length; index++) {
-          const product = {
-            name: productNames[index],
-            internalCode: productInternalCodes[index],
-            promotions: productPromotions[index],
-            priceInList: productPriceList[index],
-            pricePPago: productPricePPago[index],
-          };
-          products.push(product);
         }
+        this.delay(1000);
+        const productName = await newPage.evaluate(() => {
+          const name = document.querySelector('h5.purchasedescription')?.textContent;
+          return name;
+        });
+        const productCode = await newPage.evaluate(() => {
+          return document.querySelector('div.container-fluid.container-detallesProducto h4.itemid')?.textContent;
+        });
+        const priceInList = await newPage.evaluate(() => {
+          return document.querySelector('span#precioLista')?.textContent ?? null;
+        });
+        const clientPrice = await newPage.evaluate(() => {
+          const price = document.querySelector(
+            'div.container-fluid.container-detallesProducto > div > div.container-info.col-lg-6.col-12 > div > div:nth-child(3) > div > div:nth-child(2) > div > h5:nth-child(3) > span.text-blue',
+          )?.textContent;
+          if (!price) {
+            return null;
+          }
+          return price.replace(/[^0-9.]+/g, '');
+        });
+        const suggestPrice = await newPage.evaluate(() => {
+          const price = document.querySelector(
+            'div.container-fluid.container-detallesProducto > div > div.container-info.col-lg-6.col-12 > div > div:nth-child(3) > div > div:nth-child(2) > div > h5:nth-child(4) > span',
+          )?.textContent;
+          if (!price) {
+            return null;
+          }
+          return price.replace(/[^0-9.]+/g, '');
+        });
+        const productPromotion = await newPage.evaluate(() => {
+          const discount = document.querySelector('div.promosContainer h5.infoItem span')?.textContent;
+          const promotionDescription = document.querySelector(
+            'div.container-fluid.container-detallesProducto > div > div.container-info.col-lg-6.col-12 > div > div:nth-child(4) > div > div:nth-child(1) > h5:nth-child(2) > span',
+          )?.textContent;
+          if (discount && promotionDescription) {
+            return {
+              description: `${discount} ${promotionDescription}`,
+            };
+          }
+          return null;
+        });
+        const product: CreateProductDto = {
+          name: productName,
+          internalCode: productCode,
+          promotion: productPromotion,
+          priceInList: priceInList,
+          clientPrice: clientPrice,
+          suggestPrice: suggestPrice,
+        };
+        products.push(product);
+        await newPage.close();
       }
-      await page.waitForSelector('#tabla_posicion_pagina2 > div > a:nth-last-child(-n+2)#tabla_pagina_otras', { timeout: 60000 });
-      await page.evaluate((btnSelector) => {
-        const pageNextButton = document.querySelector(btnSelector);
-        pageNextButton.click();
-      }, '#tabla_posicion_pagina2 > div > a:nth-last-child(-n+2)#tabla_pagina_otras');
+      if (!hasPagination) {
+        break;
+      }
+      const nextPageIsEnabled = await page.$eval('#paginationUl li:nth-last-child(-n+1)', (el) => !el.classList.contains('disabled'));
+      if (!nextPageIsEnabled) {
+        isLastPage = true;
+      }
+      await page.evaluate(() => {
+        const nextPageBtn = document.querySelector<HTMLAnchorElement>('#paginationUl li:nth-last-child(-n+1) a');
+        nextPageBtn.click();
+      });
     }
     await page.close();
     return products;

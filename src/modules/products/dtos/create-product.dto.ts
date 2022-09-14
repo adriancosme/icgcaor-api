@@ -34,5 +34,12 @@ export class CreateProductDto {
   })
   @IsString()
   @IsNotEmpty()
-  pricePPago: string;
+  clientPrice: string;
+
+  @ApiProperty({
+    description: 'Price payment discount',
+  })
+  @IsString()
+  @IsNotEmpty()
+  suggestPrice: string;
 }

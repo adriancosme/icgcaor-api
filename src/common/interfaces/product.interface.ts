@@ -4,7 +4,8 @@ export interface IProduct {
   internalCode: string;
   promotion: IPromotion | null;
   priceInList: string;
-  pricePPago: string;
+  clientPrice: string;
+  suggestPrice: string;  
   createdAt: Date;
   updatedAt: Date;
 }

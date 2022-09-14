@@ -11,7 +11,7 @@ export class ScrapperLogsService {
    */
   async getLastUpdate() {
     const log = await this.scrapperLogsModel.findOne({}).sort({ createdAt: -1 });
-    return log.toObject();
+    return log?.toObject();
   }
 
   /**
@@ -21,6 +21,6 @@ export class ScrapperLogsService {
   async create(products: number) {
     const log = new this.scrapperLogsModel({ productsImported: products });
     await log.save();
-    return log.toObject();
+    return log?.toObject();
   }
 }

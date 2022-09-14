@@ -1,7 +1,7 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiOkResponse, ApiUnauthorizedResponse, ApiBadGatewayResponse, ApiBadRequestResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ScrapperLogsService } from './services/schepper-logs.service';
+import { ScrapperLogsService } from './services/scrapper-logs.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('scrapper')

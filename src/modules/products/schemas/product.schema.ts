@@ -11,14 +11,17 @@ export class Product extends Document {
   @Prop({ required: true, unique: true })
   internalCode: string;
   @ApiProperty()
-  @Prop({ type: PromotionSchema, default: 'NULL' })
+  @Prop({ type: PromotionSchema, default: null })
   promotion: Promotion | null;
   @ApiProperty()
   @Prop()
   priceInList: string;
   @ApiProperty()
   @Prop()
-  pricePPago: string;
+  clientPrice: string;
+  @ApiProperty()
+  @Prop()
+  suggestPrice: string;
 }
 
 export type ProductDocument = Product & Document;
