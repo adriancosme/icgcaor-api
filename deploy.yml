@@ -12,23 +12,49 @@ services:
     networks:
       - app-network
     depends_on:
-      - database
-
-  database:
-    image: mongo:latest # use latest official mongodb version
-    env_file:
-      - environment/.env.${NODE_ENV:-development} # configure postgres
-    volumes:
-      - database-data:/data/db # persist data even if container shuts down
+      - mongodb
+      - redis
+  mongodb:
+    image: mongo:5.0 # use latest official mongodb version
+    container_name: mongo
+    hostname: mongo
     ports:
-      - "${MONGODB_PORT:-27017}:27017"
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: 123456
+      MONGO_INITDB_DATABASE: ack
+    volumes:
+      - dbdata:/data/db
+    restart: unless-stopped
     networks:
       - app-network
-    restart: unless-stopped
+  redis:
+    image: redis
+    container_name: redis
+    hostname: redis
+    restart: always
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - "REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL"
+    command:
+      - redis-server
+      - "--bind"
+      - redis
+      - "--port"
+      - "6379"
+    volumes:
+      - "redis_data:/usr/local/etc/redis/redis.conf"
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - app-network
+
 networks:
   app-network:
     name: app-network
     driver: bridge
 
 volumes:
-  database-data:
+  dbdata:
+  redis_data:
