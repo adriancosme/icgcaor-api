@@ -14,7 +14,7 @@ export class IndarScrapperService {
 
   @Cron(CronExpression.EVERY_DAY_AT_1AM)
   async getDataViaPuppeter() {
-    const random = randomDate(1, 5);
+    const random = randomDate(0, 4);
     const hoursMs = random.getHours() * 60 * 60 * 1000;
     const minutesMs = random.getMinutes() * 60 * 1000;
     const time = hoursMs + minutesMs;
