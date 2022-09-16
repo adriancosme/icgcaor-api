@@ -12,7 +12,7 @@ export class IndarScrapperService {
   constructor(@InjectModel(Page.name) private readonly pageModel: Model<PageDocument>, @InjectQueue('pages-queue') private queue: Queue) {}
   private readonly logger = new Logger(IndarScrapperService.name);
 
-  @Cron(CronExpression.EVERY_DAY_AT_1AM)
+  @Cron(CronExpression.EVERY_DAY_AT_1AM, {timeZone: 'America/Mexico_City'})
   async getDataViaPuppeter() {
     const random = randomDate(0, 4);
     const hoursMs = random.getHours() * 60 * 60 * 1000;
