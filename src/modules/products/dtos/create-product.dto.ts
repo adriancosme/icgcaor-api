@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { Promotion } from '../schemas/promotion.schema';
+import { IPromotion } from '../../../common/interfaces';
 
 export class CreateProductDto {
   @ApiProperty({
@@ -20,7 +20,7 @@ export class CreateProductDto {
   @ApiProperty({
     description: 'Promotion, is optional',
   })
-  promotion?: Promotion;
+  promotion?: IPromotion;
 
   @ApiProperty({
     description: 'Price in list',

@@ -1,29 +1,23 @@
-import { BullModule, BullModuleOptions } from '@nestjs/bull';
+import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ScrapperLogsModule } from '../../modules/scrapper-logs/scrapper-logs.module';
 import { Page, PageSchema } from '../../modules/pages/schemas/page.schema';
 import { ProductsModule } from '../../modules/products/products.module';
+import { ScrapperLogsModule } from '../../modules/scrapper-logs/scrapper-logs.module';
 import { IndarScrapperService } from './indar-scrapper.service';
-import { ProductsProcessor } from './products.processor';
+import { PagesProcessor } from './pages.processor';
 import { TaskService } from './task.service';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
     BullModule.registerQueue({
-      name: 'products-queue',
-      defaultJobOptions: {
-        attempts: 5,
-        removeOnComplete: true,
-        removeOnFail: true,
-        delay: 1000,
-      },
-    } as BullModuleOptions),
+      name: 'pages-queue',
+    }),
     ProductsModule,
     MongooseModule.forFeature([{ name: Page.name, schema: PageSchema }]),
     ScrapperLogsModule,
   ],
-  providers: [TaskService, IndarScrapperService, ProductsProcessor],
+  providers: [TaskService, IndarScrapperService, PagesProcessor],
 })
 export class SchedulerModule {}

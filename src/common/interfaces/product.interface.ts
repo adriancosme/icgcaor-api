@@ -11,6 +11,5 @@ export interface IProduct {
 }
 
 export interface IPromotion {
-  description: string;
-  expiration: string;
+  description: string;  
 }

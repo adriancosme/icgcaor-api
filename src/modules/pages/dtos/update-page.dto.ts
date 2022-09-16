@@ -9,7 +9,7 @@ export class UpdatePageDto {
   @ApiProperty()
   @IsUrl()
   @IsNotEmpty()
-  @Contains('www.indar.mx')
+  @Contains('indar.mx')
   url: string;
   @ApiProperty()
   @IsString()
