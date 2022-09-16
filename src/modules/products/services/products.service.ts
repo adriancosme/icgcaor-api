@@ -7,7 +7,7 @@ import { UpdateProductDto } from '../dtos/update-product.dto';
 import { Product, ProductDocument } from '../schemas/product.schema';
 import { createObjectCsvWriter } from 'csv-writer';
 import { join } from 'path';
-import { createReadStream, readFileSync } from 'fs';
+import { createReadStream, existsSync, mkdirSync, readFileSync } from 'fs';
 @Injectable()
 export class ProductsService {
   constructor(@InjectModel(Product.name) private readonly productModel: Model<ProductDocument>) {}
@@ -69,6 +69,11 @@ export class ProductsService {
    * Export products to csv
    */
   async exportProducts(dto: ExportProductDto) {
+    var dirTemp = join(process.cwd(), '/temp');
+
+    if (!existsSync(dirTemp)) {
+      mkdirSync(dirTemp);
+    }
     const products = await this.productModel
       .find({ updatedAt: { $gte: new Date(dto.dateStart), $lt: new Date(dto.dateEnd) } })
       .sort({ updatedAt: -1 });
@@ -94,11 +99,11 @@ export class ProductsService {
 
   async getLastUpdateFromProduct() {
     const data = await this.productModel.findOne({}).sort({ updatedAt: -1 });
-    if(!data) {
-      return null
+    if (!data) {
+      return null;
     }
     return {
-      createdAt: data.toJSON().updatedAt
-    }
+      createdAt: data.toJSON().updatedAt,
+    };
   }
 }
