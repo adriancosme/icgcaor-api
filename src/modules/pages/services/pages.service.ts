@@ -42,4 +42,12 @@ export class PagesService {
   async getPages() {
     return await this.pageModel.find({});
   }
+
+  /**
+   * Delete one page given id
+   * @param id
+   */
+  async deleteOne(id: string) {
+    return await this.pageModel.findByIdAndDelete(id, { new: true });
+  }
 }

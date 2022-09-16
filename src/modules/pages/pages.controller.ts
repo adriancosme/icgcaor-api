@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import {
   ApiBadGatewayResponse,
   ApiBadRequestResponse,
@@ -67,5 +67,16 @@ export class PagesController {
   @Get('/')
   async getCount() {
     return this.service.getPages();
+  }
+
+  @ApiTags('Pages single operation')
+  @ApiOperation({ summary: 'Delete page', description: 'Delete page from database' })
+  @ApiOkResponse({ status: 200, description: 'Success response' })
+  @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized' })
+  @ApiBadGatewayResponse({ status: 502, description: 'Something happened' })
+  @ApiBadRequestResponse({ status: 400, description: 'You will prompt with an array with the validation issues' })
+  @Delete(':id')
+  async deleteOne(@Param('id') id: string) {
+    return await this.service.deleteOne(id);
   }
 }
