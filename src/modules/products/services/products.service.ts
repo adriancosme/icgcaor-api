@@ -91,4 +91,14 @@ export class ProductsService {
     const file = await readFileSync(join(process.cwd(), '/temp', fileName));
     return `data:text/csv;base64,${file.toString('base64')}`;
   }
+
+  async getLastUpdateFromProduct() {
+    const data = await this.productModel.findOne({}).sort({ updatedAt: -1 });
+    if(!data) {
+      return null
+    }
+    return {
+      createdAt: data.toJSON().updatedAt
+    }
+  }
 }
