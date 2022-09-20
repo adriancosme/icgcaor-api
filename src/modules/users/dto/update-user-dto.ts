@@ -1,21 +1,14 @@
-import { PartialType, OmitType, ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, IsOptional, MinLength, MaxLength, Matches } from 'class-validator';
-import { IsEmailAlreadyExist, IsUsernameAlreadyExist } from '../../../common/validators';
-import { CreateUserDto } from './create-user.dto';
+import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
+import { IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsUsernameAlreadyExist } from '../../../common/validators';
 import { PATTERN_VALID_USERNAME } from '../../../config/config.constants';
+import { CreateUserDto } from './create-user.dto';
 
 // TODO: sintetizar esto porque a lo mejor los tipados estan demas
-export class UpdateUserDto extends PartialType(OmitType(CreateUserDto, ['email'])) {
+export class UpdateUserDto extends PartialType(OmitType(CreateUserDto, ['username'])) {
   @ApiProperty()
   @IsOptional()
   _id?: string;
-
-  @ApiProperty()
-  @IsEmailAlreadyExist({ message: 'Email $value already exists. Choose another Email.' })
-  @IsEmail()
-  @IsString()
-  @IsOptional()
-  email: string;
 
   @ApiProperty()
   @IsUsernameAlreadyExist({ message: 'Username $value already exists. Choose another username.' })

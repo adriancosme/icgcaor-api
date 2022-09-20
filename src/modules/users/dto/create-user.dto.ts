@@ -1,19 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, Matches, MaxLength, MinLength } from 'class-validator';
-import { IsEmailAlreadyExist, IsUsernameAlreadyExist } from '../../../common/validators';
-import { PATTERN_VALID_USERNAME } from '../../../config/config.constants';
+import { IsEmail, IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
+import { IsUsernameAlreadyExist } from '../../../common/validators';
 
 export class CreateUserDto {
   @ApiProperty({
     description: 'Email for your account, must be unique.',
   })
-  @IsEmailAlreadyExist({
-    message: 'Email $value already exists. Choose another Email.',
-  })
-  @IsEmail()
+  @IsUsernameAlreadyExist({
+    message: 'Username $value already exists. Choose another username.',
+  })  
   @IsString()
   @IsNotEmpty()
-  email!: string;
+  @MaxLength(15)
+  username!: string;
 
   @ApiProperty({ description: 'Secure password' })
   @IsString()

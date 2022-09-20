@@ -8,7 +8,7 @@ export type UserDocument = User & Document;
 export class User extends Document {
   @ApiProperty()
   @Prop({ required: true, unique: true })
-  email!: string;
+  username!: string;
 
   @ApiProperty()
   @Prop({

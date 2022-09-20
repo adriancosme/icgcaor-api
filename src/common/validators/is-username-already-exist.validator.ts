@@ -6,8 +6,8 @@ import { User, UserDocument } from '../../modules/users/schemas/user.schema';
 @ValidatorConstraint({ async: true })
 export class IsUsernameAlreadyExistConstraint implements ValidatorConstraintInterface {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
-  async validate(username: string) {
-    const result = this.userModel.findOne({ username });
+  async validate(username: string) {    
+    const result = await this.userModel.findOne({ username });
     if (result) return false;
     return true;
   }
