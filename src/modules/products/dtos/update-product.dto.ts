@@ -30,9 +30,30 @@ export class UpdateProductDto {
   priceInList: string;
 
   @ApiProperty({
+    description: 'Price suggest discount',
+  })
+  @IsString()
+  @IsNotEmpty()
+  suggestPrice: string;
+
+  @ApiProperty({
     description: 'Price payment discount',
   })
   @IsString()
   @IsNotEmpty()
   pricePPago: string;
+
+  @ApiProperty({
+    description: 'Url product where was getted',
+  })
+  @IsString()
+  @IsNotEmpty()
+  pageUrl: string;
+
+  @ApiProperty({
+    description: 'Provider name or page name',
+  })
+  @IsString()
+  @IsNotEmpty()
+  provider: string;
 }

@@ -5,6 +5,7 @@ import puppeteer from 'puppeteer';
 import { ProductsService } from '../../modules/products/services/products.service';
 import { IPage } from '../../common/interfaces/page.interface';
 import { CreateProductDto } from '../../modules/products/dtos/create-product.dto';
+import { join } from 'path';
 @Processor('pages-queue')
 export class PagesProcessor {
   constructor(public productsService: ProductsService) {}
@@ -13,7 +14,7 @@ export class PagesProcessor {
   async extract(job: Job<IPage>) {
     this.logger.log(`processing ${job.data.name}`);
     try {
-      await this.extractData({ uri: job.data.url });
+      await this.extractData(job.data);
       return job.data;
     } catch (error) {
       this.logger.error(error);
@@ -27,17 +28,16 @@ export class PagesProcessor {
     });
   }
 
-  async extractData({ uri }) {
-    
+  async extractData({ name: pageName, url }: IPage) {
     const startTime = performance.now();
     const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await browser.newPage();
     await page.goto('https://www.indar.mx/', {
-      waitUntil: 'domcontentloaded',
+      waitUntil: 'networkidle2', timeout: 60000
     });
     await page.evaluate(() => {
       const buttonOpenModalLogin = document.querySelector<HTMLHeadingElement>('.login-options > div > h5[onclick="activeModal(1)"]');
-      buttonOpenModalLogin.click();
+      buttonOpenModalLogin?.click();
     });
     await page.waitForSelector('#login-modal');
     await page.type('#login-modal > form #email', 'ferre_motos@hotmail.com');
@@ -45,11 +45,11 @@ export class PagesProcessor {
     await Promise.all([
       await page.evaluate(() => {
         const LoginBtn = document.querySelector<HTMLAnchorElement>('#login-modal > form > .login-buttons > button.btn.login-btn[type="submit"]');
-        LoginBtn.click();
+        LoginBtn?.click();
       }),
-      await page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 60000 }),
     ]);
-    this.delay(1000);
+    await this.delay(1000);
     const isLoggedIn = await page.evaluate(() => {
       const iconosCuenta = document.querySelectorAll('.iconos-cuenta.row');
       if (iconosCuenta.length > 0) return true;
@@ -61,19 +61,37 @@ export class PagesProcessor {
 
     // GO TO PAGE AND GET COD PRODUCTS OF EVERY PAGE
     await Promise.all([
-      page.goto(uri, {
-        waitUntil: 'domcontentloaded',
+      page.goto(url, {
+        waitUntil: 'networkidle2',
       }),
-      page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 60000 }),
     ]);
-    this.delay(20000);
+    await this.delay(20000);
+    await page.screenshot({ path: join(process.cwd(), '/temp', 'screenshot.png') });
     const hasPagination = await page.evaluate(() => {
       const liItems = document.querySelectorAll('#paginationUl li');
       return liItems.length;
     });
     let isLastPage = false;
+    await page.screenshot({ path: join(process.cwd(), '/temp', 'screenshot2.png') });
     while (!isLastPage) {
-      const hasProducts = await page.$$eval('#productList > div > div > div.itemInfo > h5', (el) => el.length > 0);
+      let hasProducts = await page.evaluate(() => {
+        const products = document.querySelectorAll('#productList > div > div > div.itemInfo > h5');
+        return products.length;
+      });
+      await page.screenshot({ path: join(process.cwd(), '/temp', 'screenshot3.png') });
+      console.log(hasProducts);
+      if (!hasProducts) {
+        console.log('waiting');
+        await this.delay(120000);
+        hasProducts = await page.evaluate(() => {
+          const products = document.querySelectorAll('#productList > div > div > div.itemInfo > h5');
+          return products.length;
+        });
+      }
+      console.log(hasProducts);
+      console.log(!hasProducts);
+      await page.screenshot({ path: join(process.cwd(), '/temp', 'screenshot4.png') });
       if (!hasProducts) {
         break;
       }
@@ -88,10 +106,10 @@ export class PagesProcessor {
         const newPage = await browser.newPage();
 
         const res = await newPage.goto(`https://www.indar.mx/portal/detallesProducto/${code}`, {
-          waitUntil: 'domcontentloaded',
+          waitUntil: 'domcontentloaded', timeout: 60000
         });
         if (res.status() === 500) {
-          const res = await newPage.reload({ waitUntil: 'domcontentloaded' });
+          const res = await newPage.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
           if (res.status() === 500) {
             break;
           }
@@ -129,9 +147,10 @@ export class PagesProcessor {
           const promotionDescription = document.querySelector(
             'div.container-fluid.container-detallesProducto > div > div.container-info.col-lg-6.col-12 > div > div:nth-child(4) > div > div:nth-child(1) > h5:nth-child(2) > span',
           )?.textContent;
+          const minPzas = document.querySelector('#promoMinPzas')?.textContent;
           if (discount && promotionDescription) {
             return {
-              description: `${discount} ${promotionDescription}`,
+              description: `${discount} ${promotionDescription}${minPzas}`,
             };
           }
           return null;
@@ -143,12 +162,16 @@ export class PagesProcessor {
           priceInList: priceInList,
           clientPrice: clientPrice,
           suggestPrice: suggestPrice,
+          pageUrl: `https://www.indar.mx/portal/detallesProducto/${code}`,
+          provider: pageName
         };
         products.push(product);
         await newPage.close();
       }
+      this.logger.log(`${products.length} products are going to add or update`);
       const dataInserted = await this.productsService.createBatch(products);
-      this.logger.log(`${dataInserted.length} products added or updated to database`);
+      this.logger.log(`${dataInserted.length} products updated to database`);
+      this.logger.log(`${products.length - dataInserted.length} products added to database`);
       if (!hasPagination) {
         break;
       }
@@ -158,7 +181,7 @@ export class PagesProcessor {
       }
       await page.evaluate(() => {
         const nextPageBtn = document.querySelector<HTMLAnchorElement>('#paginationUl li:nth-last-child(-n+1) a');
-        nextPageBtn.click();
+        nextPageBtn?.click();
       });
     }
     await page.close();
@@ -173,17 +196,17 @@ export class PagesProcessor {
   }
 
   @OnQueueCompleted()
-  onCompleted(job: Job) {
-    this.logger.debug(`Job completed ${job.id} of type ${job.name}`);
+  onCompleted(job: Job<IPage>) {
+    this.logger.debug(`Job completed. ${job.data.name} Products page has been updated`);
   }
 
   @OnQueueStalled()
-  onStalled(job: Job) {
+  onStalled(job: Job<IPage>) {
     this.logger.debug(`Job Stalled ${job.id} of type ${job.name}`);
   }
 
   @OnQueueFailed()
-  onFailed(job: Job) {
-    this.logger.debug(`Job Failed ${job.id} of type ${job.name}`);
+  onFailed(job: Job<IPage>) {
+    this.logger.debug(`Job Failed ${job.id} Page: ${job.data.name}`);
   }
 }

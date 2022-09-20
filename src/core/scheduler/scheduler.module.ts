@@ -7,7 +7,6 @@ import { ProductsModule } from '../../modules/products/products.module';
 import { ScrapperLogsModule } from '../../modules/scrapper-logs/scrapper-logs.module';
 import { IndarScrapperService } from './indar-scrapper.service';
 import { PagesProcessor } from './pages.processor';
-import { TaskService } from './task.service';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -18,6 +17,6 @@ import { TaskService } from './task.service';
     MongooseModule.forFeature([{ name: Page.name, schema: PageSchema }]),
     ScrapperLogsModule,
   ],
-  providers: [TaskService, IndarScrapperService, PagesProcessor],
+  providers: [IndarScrapperService, PagesProcessor],
 })
 export class SchedulerModule {}

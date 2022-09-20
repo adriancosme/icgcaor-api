@@ -47,7 +47,7 @@ export class ProductsService {
     const products: Product[] = [];
     for (const dto of dtos) {
       if (dto.internalCode) {
-        const product = await this.productModel.findOneAndUpdate({ internalCode: dto.internalCode }, dto, { upsert: true });
+        const product = await this.productModel.findOneAndUpdate({ internalCode: dto.internalCode }, {$set: dto}, { upsert: true, new: true });        
         if (!!product) {
           const editedProduct = Object.assign(product, dto);
           products.push(editedProduct);
@@ -87,7 +87,7 @@ export class ProductsService {
     const csvObject = createObjectCsvWriter({
       path: join(process.cwd(), '/temp', fileName),
       headerIdDelimiter: '.',
-      header: ['name', 'internalCode', 'promotion', 'promotion.description', 'priceInList', 'clientPrice', 'suggestPrice'].map((item) => ({
+      header: ['name', 'internalCode', 'promotion.description', 'priceInList', 'clientPrice', 'suggestPrice', 'pageUrl', 'provider'].map((item) => ({
         id: item,
         title: item.replace('.', '_'),
       })),
