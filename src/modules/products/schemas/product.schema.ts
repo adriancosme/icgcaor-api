@@ -22,6 +22,12 @@ export class Product extends Document {
   @ApiProperty()
   @Prop()
   suggestPrice: string;
+  @ApiProperty()
+  @Prop()
+  pageUrl: string;
+  @ApiProperty()
+  @Prop()
+  provider: string;
 }
 
 export type ProductDocument = Product & Document;
