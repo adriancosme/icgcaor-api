@@ -114,6 +114,7 @@ export class PagesProcessor {
             break;
           }
         }
+        await this.delay(5000);
         const productName = await newPage.evaluate(() => {
           const name = document.querySelector('h5.purchasedescription')?.textContent;
           return name;
@@ -146,11 +147,10 @@ export class PagesProcessor {
           const discount = document.querySelector('div.promosContainer h5.infoItem span')?.textContent;
           const promotionDescription = document.querySelector(
             'div.container-fluid.container-detallesProducto > div > div.container-info.col-lg-6.col-12 > div > div:nth-child(4) > div > div:nth-child(1) > h5:nth-child(2) > span',
-          )?.textContent;
-          const minPzas = document.querySelector('#promoMinPzas')?.textContent;
+          )?.textContent;          
           if (discount && promotionDescription) {
             return {
-              description: `${discount} ${promotionDescription}${minPzas}`,
+              description: `${discount} ${promotionDescription}`,
             };
           }
           return null;
