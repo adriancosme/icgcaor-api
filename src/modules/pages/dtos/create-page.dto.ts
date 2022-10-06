@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, Contains, IsUrl } from 'class-validator';
+import { IsString, IsNotEmpty, Contains, IsUrl, Matches } from 'class-validator';
 
 export class CreatePageDto {
   @ApiProperty({ description: 'Url of page to get products' })
   @IsUrl()
   @IsNotEmpty()
-  @Contains('www.indar.mx')
+  @Matches('indar.mx|surtimex.com')
   url: string;
   @ApiProperty({ description: 'Name of the page' })
   @IsString()

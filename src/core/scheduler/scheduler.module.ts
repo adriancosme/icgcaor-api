@@ -5,7 +5,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { Page, PageSchema } from '../../modules/pages/schemas/page.schema';
 import { ProductsModule } from '../../modules/products/products.module';
 import { ScrapperLogsModule } from '../../modules/scrapper-logs/scrapper-logs.module';
-import { IndarScrapperService } from './indar-scrapper.service';
+import { ScrapperService } from './scrapper.service';
 import { PagesProcessor } from './pages.processor';
 @Module({
   imports: [
@@ -17,6 +17,6 @@ import { PagesProcessor } from './pages.processor';
     MongooseModule.forFeature([{ name: Page.name, schema: PageSchema }]),
     ScrapperLogsModule,
   ],
-  providers: [IndarScrapperService, PagesProcessor],
+  providers: [ScrapperService, PagesProcessor],
 })
 export class SchedulerModule {}

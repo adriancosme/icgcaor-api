@@ -6,16 +6,26 @@ import { ProductsService } from '../../modules/products/services/products.servic
 import { IPage } from '../../common/interfaces/page.interface';
 import { CreateProductDto } from '../../modules/products/dtos/create-product.dto';
 import { join } from 'path';
+import { Promotion } from 'src/modules/products/schemas/promotion.schema';
 @Processor('pages-queue')
 export class PagesProcessor {
-  constructor(public productsService: ProductsService) {}
+  constructor(public productsService: ProductsService) { }
   private readonly logger = new Logger(PagesProcessor.name);
   @Process('extract')
   async extract(job: Job<IPage>) {
-    this.logger.log(`processing ${job.data.name}`);
     try {
-      await this.extractData(job.data);
-      return job.data;
+      const regexSurtimex = new RegExp('surtimex.com')
+      const regexIndar = new RegExp('indar.mx')
+      if (regexSurtimex.test(job.data.url)) {
+        this.logger.log(`processing surtimex ${job.data.name}`);
+        await this.extractDataSurtimex(job.data);
+        return job.data;
+      }
+      if (regexIndar.test(job.data.url)) {
+        this.logger.log(`processing indar ${job.data.name}`);
+        await this.extractDataIndar(job.data);
+        return job.data;
+      }
     } catch (error) {
       this.logger.error(error);
       throw new Error(error);
@@ -28,7 +38,7 @@ export class PagesProcessor {
     });
   }
 
-  async extractData({ name: pageName, url }: IPage) {
+  async extractDataIndar({ name: pageName, url }: IPage) {
     const startTime = performance.now();
     const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await browser.newPage();
@@ -114,7 +124,7 @@ export class PagesProcessor {
             break;
           }
         }
-        await this.delay(5000);
+        await this.delay(1000);
         const productName = await newPage.evaluate(() => {
           const name = document.querySelector('h5.purchasedescription')?.textContent;
           return name;
@@ -147,7 +157,7 @@ export class PagesProcessor {
           const discount = document.querySelector('div.promosContainer h5.infoItem span')?.textContent;
           const promotionDescription = document.querySelector(
             'div.container-fluid.container-detallesProducto > div > div.container-info.col-lg-6.col-12 > div > div:nth-child(4) > div > div:nth-child(1) > h5:nth-child(2) > span',
-          )?.textContent;          
+          )?.textContent;
           if (discount && promotionDescription) {
             return {
               description: `${discount} ${promotionDescription}`,
@@ -185,6 +195,111 @@ export class PagesProcessor {
       });
     }
     await page.close();
+    await browser.close();
+    const endTime = performance.now();
+    this.logger.log(`Extract products took ${Math.floor(endTime - startTime)} milliseconds`);
+  }
+
+  async extractDataSurtimex({ name: pageName, url }: IPage) {
+    const startTime = performance.now();
+    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const page = await browser.newPage();
+    // LOGIN
+    await page.goto('https://www.surtimex.com/cuenta');
+    await page.type('#username', 'CMOR3917');
+    await page.type('#password', 'cR&874dFO');
+    await page.click('#login-form > button');
+    await page.waitForSelector('div.indicator.cerrar-s > a')
+    await page.goto('https://www.surtimex.com/buscar-productos-marca/fandeli_49', { waitUntil: 'networkidle2' });
+    await page.waitForSelector('#pagination li')
+    const hasPagination = await page.$$('#pagination li');
+    let isLastPage = false;
+    while (!isLastPage) {
+      const [names, skus] = await page.evaluate(() => {
+        const namesAndSkus = [...document.querySelectorAll('.products-list__item .product-card__name a')];
+        const names = namesAndSkus.map((value) => {
+          return value.innerHTML.split('<br>')[0]
+        })
+        const skus = namesAndSkus.map((value) => {
+          return value.innerHTML.split('<br>')[1]
+        })
+        return [names, skus]
+      })
+
+      const [discounts] = await page.evaluate(() => {
+        const divs = [...document.querySelectorAll('.products-list__item .product-card')];
+        const discounts = divs.map((value, index) => {
+          if (value.childElementCount === 0) return null
+          const hasDiscount = document.querySelector(`div.products-view__list.products-list > div > div:nth-child(${index + 1}) > div > div.product-card__badges-list`)
+          if (hasDiscount === null) return null
+          return hasDiscount.textContent.trim()
+        })
+
+        return [discounts]
+      })
+
+      const [productPricesHasChildren, newPrices, oldPrices, productPrices] = await page.evaluate(() => {
+        let newPrices = null;
+        let oldPrices = null;
+        let productPrices = null;
+        const prices = [...document.querySelectorAll('.products-list__item .product-card__actions .product-card__prices')];
+        const productPricesHasChildren = prices.map((value) => {
+          return value.childElementCount
+        })
+        productPrices = productPricesHasChildren.map((value, index) => {
+          if (value === 0) {
+            return prices[index].textContent.trim().replace(/[^0-9]/, '')
+          }
+        })
+        newPrices = productPricesHasChildren.map((value, index) => {
+          if (value > 0) {
+            return prices[index].children[0].textContent.trim().replace(/[^0-9]/, '')
+          }
+        })
+        oldPrices = productPricesHasChildren.map((value, index) => {
+          if (value > 0) {
+            return prices[index].children[1].textContent.trim().replace(/[^0-9]/, '')
+          }
+        })
+        return [productPricesHasChildren, newPrices, oldPrices, productPrices]
+      })
+
+      const productsLinks = await page.evaluate(() => {
+        const links = [...document.querySelectorAll<HTMLAnchorElement>('.products-list .product-card__name a')];
+        return links.map((value) => value?.href)
+      })
+      const products = names.map((value, index) => {
+        return {
+          name: value,
+          internalCode: skus[index],
+          promotion: discounts[index] != null ? { description: discounts[index] } as Promotion : null,
+          priceInList: productPricesHasChildren[index] === 0 ? productPrices[index] : oldPrices[index],
+          clientPrice: productsLinks[index],
+          suggestPrice: productPricesHasChildren[index] > 0 ? newPrices[index] : null,
+          pageUrl: null,
+          provider: pageName
+        } as unknown as CreateProductDto
+      });
+
+      this.logger.log(`${products.length} products are going to add or update`);
+      const dataInserted = await this.productsService.createBatch(products);
+      this.logger.log(`${dataInserted.length} products updated to database`);
+      this.logger.log(`${products.length - dataInserted.length} products added to database`);
+      // MANAGE PAGINATION
+      if (!hasPagination) {
+        break;
+      }
+      const nextPageIsEnabled = await page.$eval('#pagination li:nth-last-child(-n+2)', (el) => !el.classList.contains('disabled'));
+      if (!nextPageIsEnabled) {
+        isLastPage = true;
+        break;
+      }
+      await Promise.all([
+        page.click('#pagination li:nth-last-child(-n+2) a'),
+        page.waitForNavigation()
+      ])
+
+    }
     await browser.close();
     const endTime = performance.now();
     this.logger.log(`Extract products took ${Math.floor(endTime - startTime)} milliseconds`);
