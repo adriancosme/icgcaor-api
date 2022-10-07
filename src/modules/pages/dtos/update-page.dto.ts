@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsUrl, Contains } from 'class-validator';
+import { IsNotEmpty, IsString, IsUrl, Matches } from 'class-validator';
 
 export class UpdatePageDto {
   @ApiProperty()
@@ -9,10 +9,14 @@ export class UpdatePageDto {
   @ApiProperty()
   @IsUrl()
   @IsNotEmpty()
-  @Contains('indar.mx')
+  @Matches('indar.mx|surtimex.com')
   url: string;
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
   name: string;
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  provider: string;
 }

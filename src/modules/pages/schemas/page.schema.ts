@@ -10,6 +10,9 @@ export class Page extends Document {
   @ApiProperty()
   @Prop({ required: true })
   name: string;
+  @ApiProperty()
+  @Prop({ required: true })
+  provider: string;
 }
 
 export type PageDocument = Page & Document;

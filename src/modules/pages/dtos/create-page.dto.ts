@@ -11,4 +11,8 @@ export class CreatePageDto {
   @IsString()
   @IsNotEmpty()
   name: string;
+  @ApiProperty({ description: 'Provider of products' })
+  @IsString()
+  @IsNotEmpty()
+  provider: string;
 }

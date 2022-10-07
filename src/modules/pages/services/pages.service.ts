@@ -29,7 +29,7 @@ export class PagesService {
     if (!dto._id) {
       throw new BadRequestException('You need to provide a valid id');
     }
-    const page = await this.pageModel.findOneAndUpdate({ _id: dto._id }, dto);
+    const page = await this.pageModel.findOneAndUpdate({ _id: dto._id }, dto, {new: true});
     if (!page) {
       throw new NotFoundException('Page not found');
     }

@@ -50,7 +50,7 @@ export class PagesController {
   @ApiBadGatewayResponse({ status: 502, description: 'Something happened' })
   @ApiBadRequestResponse({ status: 400, description: 'You will prompt with an array with the validation issues' })
   @ApiBody({ required: true, type: UpdatePageDto })
-  @Put()
+  @Put(':id')
   async updateOne(@Body() dto: UpdatePageDto) {
     return await this.service.update(dto);
   }
