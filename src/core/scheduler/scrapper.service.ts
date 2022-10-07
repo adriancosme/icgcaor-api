@@ -16,7 +16,7 @@ export class ScrapperService {
   async getDataViaPuppeter() {
     const pages = await this.pageModel.find({}).sort({ createdAt: 1 });
     pages.map(async (page) => {
-      const randomMinutes = getRandomInt(1, 1);
+      const randomMinutes = getRandomInt(1, 60);
       const delayMs = randomMinutes * 60000;
       this.logger.debug(`${page.name} adding to queue and it will execute on ${delayMs} miliseconds`);
       await this.queue.add('extract', page, { attempts: 5, removeOnComplete: true, removeOnFail: true, backoff: 2000, delay: delayMs });
