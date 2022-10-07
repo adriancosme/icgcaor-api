@@ -12,7 +12,7 @@ export class ScrapperService {
   constructor(@InjectModel(Page.name) private readonly pageModel: Model<PageDocument>, @InjectQueue('pages-queue') private queue: Queue) { }
   private readonly logger = new Logger(ScrapperService.name);
 
-  @Cron(CronExpression.EVERY_5_MINUTES, { timeZone: 'America/Mexico_City' })
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, { timeZone: 'America/Mexico_City' })
   async getDataViaPuppeter() {
     const pages = await this.pageModel.find({}).sort({ createdAt: 1 });
     pages.map(async (page) => {
