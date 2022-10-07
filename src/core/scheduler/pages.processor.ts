@@ -210,7 +210,7 @@ export class PagesProcessor {
     await page.type('#password', 'cR&874dFO');
     await page.click('#login-form > button');
     await page.waitForSelector('div.indicator.cerrar-s > a')
-    await page.goto('https://www.surtimex.com/buscar-productos-marca/fandeli_49', { waitUntil: 'networkidle2' });
+    await page.goto(url, { waitUntil: 'networkidle2' });
     await page.waitForSelector('#pagination li')
     const hasPagination = await page.$$('#pagination li');
     let isLastPage = false;
