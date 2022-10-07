@@ -274,9 +274,9 @@ export class PagesProcessor {
           internalCode: skus[index],
           promotion: discounts[index] != null ? { description: discounts[index] } as Promotion : null,
           priceInList: productPricesHasChildren[index] === 0 ? productPrices[index] : oldPrices[index],
-          clientPrice: productsLinks[index],
+          clientPrice: null,
           suggestPrice: productPricesHasChildren[index] > 0 ? newPrices[index] : null,
-          pageUrl: null,
+          pageUrl: productsLinks[index],
           provider: pageName
         } as unknown as CreateProductDto
       });
