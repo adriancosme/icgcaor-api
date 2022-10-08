@@ -9,7 +9,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { DataOutput } from 'src/common/interfaces';
+import { DataOutput } from '../../common/interfaces';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreatePageDto } from './dtos/create-page.dto';
 import { UpdatePageDto } from './dtos/update-page.dto';

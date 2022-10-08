@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { Role } from '../../../common/enums/role.enum';
 import { IsUsernameAlreadyExist } from '../../../common/validators';
 
 export class CreateUserDto {
@@ -8,7 +9,7 @@ export class CreateUserDto {
   })
   @IsUsernameAlreadyExist({
     message: 'Username $value already exists. Choose another username.',
-  })  
+  })
   @IsString()
   @IsNotEmpty()
   @MaxLength(15)
@@ -18,4 +19,7 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   password!: string;
+  @ApiProperty({ description: 'Secure password', enum: Object.values(Role) })
+  @IsEnum(Role)
+  role!: Role;
 }

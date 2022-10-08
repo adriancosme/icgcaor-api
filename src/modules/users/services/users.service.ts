@@ -63,8 +63,9 @@ export class UsersService {
    */
   async create(dto: CreateUserDto): Promise<User> {
     const user = await this.userModel.create(dto);
-    delete user.password;
-    return user;
+    const newUser = user.toObject<User>();
+    delete newUser.password;
+    return newUser;
   }
 
   /**
@@ -79,6 +80,7 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    delete user.password;
     return user;
   }
 

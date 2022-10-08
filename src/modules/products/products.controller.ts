@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, ParseArrayPipe, Post, Put, Res, StreamableFile, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, ParseArrayPipe, Post, Put, UseGuards } from '@nestjs/common';
 import {
   ApiBadGatewayResponse,
   ApiBadRequestResponse,
@@ -7,16 +7,15 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiTags,
-  ApiUnauthorizedResponse,
+  ApiUnauthorizedResponse
 } from '@nestjs/swagger';
-import { DataOutput } from 'src/common/interfaces';
+import { DataOutput } from '../../common/interfaces';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { ExportProductDto } from './dtos/export-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { Product } from './schemas/product.schema';
 import { ProductsService } from './services/products.service';
-import { Response } from 'express';
 
 @UseGuards(JwtAuthGuard)
 @Controller('products')
