@@ -13,6 +13,7 @@ export interface ApiLoginSuccess {
 
 export interface JwtPayload {
   sub: string;
+  role: string;
   username: string;
 }
 
@@ -40,7 +41,7 @@ export class AuthService {
   }
 
   async login(user: Partial<User>) {
-    const payload: JwtPayload = { username: user.username, sub: user._id };
+    const payload: JwtPayload = { username: user.username, sub: user._id, role: user.role };
     const accessToken = this.jwtService.sign(payload);
     return {
       user,

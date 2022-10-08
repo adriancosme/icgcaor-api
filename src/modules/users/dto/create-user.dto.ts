@@ -4,7 +4,7 @@ import { IsUsernameAlreadyExist } from '../../../common/validators';
 
 export class CreateUserDto {
   @ApiProperty({
-    description: 'Email for your account, must be unique.',
+    description: 'Username for your account, must be unique.',
   })
   @IsUsernameAlreadyExist({
     message: 'Username $value already exists. Choose another username.',

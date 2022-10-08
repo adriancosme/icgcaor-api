@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseArrayPipe, Patch, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseArrayPipe, Patch, Post, Put, Query, SetMetadata, UseGuards } from '@nestjs/common';
 import {
   ApiBadGatewayResponse,
   ApiBadRequestResponse,
@@ -11,15 +11,20 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { Role } from '../../common/enums/role.enum';
+import { RolesGuard } from '../../common/guards/roles.guard';
 
-import { DataOutput, IUser } from 'src/common/interfaces';
+import { DataOutput, IUser } from '../../common/interfaces';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { User } from './schemas/user.schema';
 import { UsersService } from './services';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('users')
 export class UsersController {
-  constructor(public service: UsersService) {}
+  constructor(public service: UsersService) { }
 
   /**
    * Create Users - Batch
@@ -33,6 +38,7 @@ export class UsersController {
   @ApiBadGatewayResponse({ status: 502, description: 'Something happened' })
   @ApiBadRequestResponse({ status: 400, description: 'You will prompt with an array with the validation issues' })
   @ApiBody({ type: [CreateUserDto] })
+  @Roles(Role.ADMIN)
   @Post('bulk')
   async createBulk(@Body(new ParseArrayPipe({ items: CreateUserDto })) dto: CreateUserDto[]): Promise<DataOutput<IUser[]>> {
     return { message: 'Users created successfully', output: await this.service.createBatch(dto) };
@@ -69,6 +75,7 @@ export class UsersController {
   @ApiBadGatewayResponse({ status: 502, description: 'Something happened' })
   @ApiBadRequestResponse({ status: 400, description: 'You will prompt with an array with the validation issues' })
   @ApiBody({ required: true, type: [UpdateUserDto] })
+  @Roles(Role.ADMIN)
   @Put('bulk')
   async updateMany(@Body(new ParseArrayPipe({ items: UpdateUserDto })) dtos: UpdateUserDto[]) {
     return await this.service.updateMany(dtos);
@@ -88,6 +95,7 @@ export class UsersController {
   @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized' })
   @ApiBadGatewayResponse({ status: 502, description: 'Something happened' })
   @ApiQuery({ name: 'ids', required: true, type: 'string', example: '1,2,3' })
+  @Roles(Role.ADMIN)
   @Patch('bulk/disable')
   async disableMany(@Query('ids', new ParseArrayPipe({ items: Number, separator: ',' })) ids: number[]) {
     return await this.service.disableMany(ids);
@@ -107,6 +115,7 @@ export class UsersController {
   @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized' })
   @ApiBadGatewayResponse({ status: 502, description: 'Something happened' })
   @ApiQuery({ name: 'ids', required: true, type: 'string', example: '1,2,3' })
+  @Roles(Role.ADMIN)
   @Patch('bulk/enable')
   async enableMany(@Query('ids', new ParseArrayPipe({ items: Number, separator: ',' })) ids: number[]) {
     return await this.service.enableMany(ids);
@@ -124,6 +133,7 @@ export class UsersController {
   @ApiBadGatewayResponse({ status: 502, description: 'Something happened' })
   @ApiBadRequestResponse({ status: 400, description: 'You will prompt with the validation issues' })
   @ApiBody({ type: CreateUserDto })
+  @Roles(Role.ADMIN)
   @Post()
   async createOne(@Body() dto: CreateUserDto): Promise<DataOutput<User>> {
     return { message: 'User created successfully', output: await this.service.create(dto) };

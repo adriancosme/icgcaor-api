@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Document } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
+import { Role } from '../../../common/enums/role.enum';
 export type UserDocument = User & Document;
 
 @Schema()
@@ -19,6 +20,10 @@ export class User extends Document {
   @ApiProperty()
   @Prop({ default: true })
   enabled: boolean;
+
+  @ApiProperty()
+  @Prop({ required: true, enum: Object.values(Role), default: Role.USER })
+  role: Role;
 }
 export const UserSchema = SchemaFactory.createForClass(User);
 
