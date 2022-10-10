@@ -219,10 +219,10 @@ export class PagesProcessor {
       const [names, skus] = await page.evaluate(() => {
         const namesAndSkus = [...document.querySelectorAll('.products-list__item .product-card__name a')];
         const names = namesAndSkus.map((value) => {
-          return value.innerHTML.split('<br>')[0]
+          return value.innerHTML.split('<br>')[0].toString().trim()
         })
         const skus = namesAndSkus.map((value) => {
-          return value.innerHTML.split('<br>')[1]
+          return value.innerHTML.split('<br>')[1].toString().trim()
         })
         return [names, skus]
       })
