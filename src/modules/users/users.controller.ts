@@ -26,6 +26,24 @@ import { UsersService } from './services';
 export class UsersController {
   constructor(public service: UsersService) { }
 
+
+  /**
+   * Get all users from database - ONLY FOR ADMINS
+   * @example GET /users
+   */
+  @ApiTags('Users single operation')
+  @ApiOperation({ summary: 'Get users', description: 'Get list of users' })
+  @ApiOkResponse({ status: 200, description: 'Success response', type: [User] })
+  @ApiOkResponse({ status: 200, description: 'Success response' })
+  @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized' })
+  @ApiBadGatewayResponse({ status: 502, description: 'Something happened' })
+  @ApiBadRequestResponse({ status: 400, description: 'You will prompt with an array with the validation issues' })
+  @Roles(Role.ADMIN)
+  @Get('/')
+  async getUsers() {
+    return await this.service.getAll();
+  }
+
   /**
    * Create Users - Batch
    * @param dto User Form but in Array format
@@ -151,8 +169,9 @@ export class UsersController {
   @ApiBadGatewayResponse({ status: 502, description: 'Something happened' })
   @ApiBadRequestResponse({ status: 400, description: 'You will prompt with an array with the validation issues' })
   @ApiBody({ required: true, type: UpdateUserDto })
+  @Roles(Role.ADMIN)
   @Put()
-  async updateOne(@Body() dto: UpdateUserDto) {
+  async updateOne(@Body() dto: UpdateUserDto) {    
     return await this.service.update(dto);
   }
 
@@ -169,8 +188,8 @@ export class UsersController {
   @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized' })
   @ApiBadGatewayResponse({ status: 502, description: 'Something happened' })
   @ApiParam({ name: 'id', required: true, type: 'number', example: '1' })
-  @Delete(':id/hard')
-  async hardDelete(@Param('id') id: string) {
+  @Delete(':id')
+  async delete(@Param('id') id: string) {
     return await this.service.delete(id);
   }
 

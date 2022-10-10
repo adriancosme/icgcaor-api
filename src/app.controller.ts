@@ -1,4 +1,4 @@
-import { Controller, Get, Request, Post, UseGuards, Body } from '@nestjs/common';
+import { Controller, Get, Request, Post, UseGuards, Body, Req } from '@nestjs/common';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -22,7 +22,7 @@ import { User } from './modules/users/schemas/user.schema';
 @ApiBearerAuth()
 @Controller()
 export class AppController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   /**
    * Login user authentication
@@ -41,6 +41,11 @@ export class AppController {
   @Post('auth/login')
   async login(@Request() req, @Body() loginDto: LoginDto) {
     return await this.authService.login(req.user);
+  }
+
+  @Post('auth/renew-token')
+  public async renewToken(@Body('refresh') refresh: string) {    
+    return this.authService.renewToken(refresh);
   }
 
   /**

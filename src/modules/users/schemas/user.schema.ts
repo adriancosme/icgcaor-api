@@ -13,7 +13,7 @@ export class User extends Document {
 
   @ApiProperty()
   @Prop({
-    length: 500,    
+    length: 500,
   })
   password: string;
 

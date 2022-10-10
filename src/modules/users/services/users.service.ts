@@ -1,13 +1,23 @@
 import { Injectable, NotFoundException, BadGatewayException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { IUser } from 'src/common/interfaces';
 
 import { CreateUserDto, UpdateUserDto } from '../dto';
 import { User, UserDocument } from '../schemas/user.schema';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>) {}
+  constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>) { }
+
+  /**
+   * Get all users from database
+   * @returns User[]
+   */
+  async getAll() {
+    const fieldsExcluded = { password: 0, __v: 0 }
+    return await this.userModel.find({}, fieldsExcluded);
+  }
 
   /**
    * Get user by id
@@ -76,12 +86,20 @@ export class UsersService {
     if (!dto._id) {
       throw new BadRequestException('You need to provide a valid id');
     }
-    const user = await this.userModel.findOneAndUpdate({ _id: dto._id }, dto);
+    const user = await this.userModel.findById(dto._id);
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    delete user.password;
-    return user;
+    user.username = dto.username;
+    user.role = dto.role;
+    if (dto.password) {
+      user.password = dto.password
+    }
+    user.save();
+    const userWithoutPass = {} as User
+    Object.assign(userWithoutPass, user)
+    delete userWithoutPass.password;
+    return userWithoutPass;
   }
 
   /**

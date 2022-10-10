@@ -10,8 +10,7 @@ export class UpdateUserDto extends PartialType(OmitType(CreateUserDto, ['usernam
   @IsOptional()
   _id?: string;
 
-  @ApiProperty()
-  @IsUsernameAlreadyExist({ message: 'Username $value already exists. Choose another username.' })
+  @ApiProperty()  
   @IsString()
   @MinLength(8)
   @MaxLength(20)
