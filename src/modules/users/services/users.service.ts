@@ -97,7 +97,7 @@ export class UsersService {
     }
     user.save();
     const userWithoutPass = {} as User
-    Object.assign(userWithoutPass, user)
+    Object.assign(userWithoutPass, user.toObject())
     delete userWithoutPass.password;
     return userWithoutPass;
   }
