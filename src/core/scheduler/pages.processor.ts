@@ -38,7 +38,7 @@ export class PagesProcessor {
     });
   }
 
-  async extractDataIndar({ name: pageName, url }: IPage) {
+  async extractDataIndar({ name: pageName, url, provider }: IPage) {
     const startTime = performance.now();
     const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await browser.newPage();
@@ -173,7 +173,8 @@ export class PagesProcessor {
           clientPrice: clientPrice,
           suggestPrice: suggestPrice,
           pageUrl: `https://www.indar.mx/portal/detallesProducto/${code}`,
-          provider: pageName
+          provider: provider,
+          pageName: pageName
         };
         products.push(product);
         await newPage.close();
@@ -200,7 +201,7 @@ export class PagesProcessor {
     this.logger.log(`Extract products took ${Math.floor(endTime - startTime)} milliseconds`);
   }
 
-  async extractDataSurtimex({ name: pageName, url }: IPage) {
+  async extractDataSurtimex({ name: pageName, url, provider }: IPage) {
     const startTime = performance.now();
     const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await browser.newPage();
@@ -277,7 +278,8 @@ export class PagesProcessor {
           clientPrice: null,
           suggestPrice: productPricesHasChildren[index] > 0 ? newPrices[index] : null,
           pageUrl: productsLinks[index],
-          provider: pageName
+          provider: provider,
+          pageName: pageName
         } as unknown as CreateProductDto
       });
 

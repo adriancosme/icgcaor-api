@@ -87,7 +87,7 @@ export class ProductsService {
     const csvObject = createObjectCsvWriter({
       path: join(process.cwd(), '/temp', fileName),
       headerIdDelimiter: '.',
-      header: ['name', 'internalCode', 'promotion.description', 'priceInList', 'clientPrice', 'suggestPrice', 'pageUrl', 'provider'].map((item) => ({
+      header: ['name', 'internalCode', 'promotion.description', 'priceInList', 'clientPrice', 'suggestPrice', 'pageUrl', 'provider', 'pageName'].map((item) => ({
         id: item,
         title: item.replace('.', '_'),
       })),

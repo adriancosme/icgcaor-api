@@ -28,6 +28,9 @@ export class Product extends Document {
   @ApiProperty()
   @Prop()
   provider: string;
+  @ApiProperty()
+  @Prop()
+  pageName: string;
 }
 
 export type ProductDocument = Product & Document;

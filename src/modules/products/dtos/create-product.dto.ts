@@ -56,4 +56,7 @@ export class CreateProductDto {
   @IsString()
   @IsNotEmpty()
   provider: string;
+  @IsString()
+  @IsNotEmpty()
+  pageName: string;
 }
