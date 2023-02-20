@@ -50,8 +50,8 @@ export class PagesProcessor {
       buttonOpenModalLogin?.click();
     });
     await page.waitForSelector('#login-modal');
-    await page.type('#login-modal > form #email', 'ferre_motos@hotmail.com');
-    await page.type('#login-modal > form #password', '87juanro');
+    await page.type('#login-modal > form #email', process.env.INDAR_EMAIL_ACCOUNT);
+    await page.type('#login-modal > form #password', process.env.INDAR_PASSWORD_ACCOUNT);
     await Promise.all([
       await page.evaluate(() => {
         const LoginBtn = document.querySelector<HTMLAnchorElement>('#login-modal > form > .login-buttons > button.btn.login-btn[type="submit"]');
