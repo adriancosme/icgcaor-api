@@ -38,8 +38,8 @@
     "crun": "node dist/main-cli"
   },
   "dependencies": {
-    "@commitlint/cli": "8.3.5",
-    "@commitlint/config-conventional": "8.3.4",
+    "@commitlint/cli": "20.1.0",
+    "@commitlint/config-conventional": "20.0.0",
     "@hapi/joi": "17.1.1",
     "@nestjs/bull": "^0.6.1",
     "@nestjs/common": "^9.0.0",
